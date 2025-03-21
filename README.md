@@ -13,9 +13,10 @@
 
 ## 1. Implement Optimistic Concurrency Control for Tournament Updates
 
-`Task:`
-- 1. Add a version column to Tournaments.
-- 2. Implement version-based optimistic concurrency control
-- 3. Ensure that only one change is successful when two concurrent admins try to update.
+Task:
+- `Add a version column to Tournaments.`
+- `Implement version-based optimistic concurrency control.`
+- `Ensure that only one change is successful when two concurrent admins try to update.`
+
 
 `ALTER TABLE Tournaments ADD COLUMN version INT NOT NULL DEFAULT 1;`
