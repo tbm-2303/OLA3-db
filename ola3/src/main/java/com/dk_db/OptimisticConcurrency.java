@@ -8,14 +8,54 @@ public class OptimisticConcurrency {
     private static final String PASSWORD = "KT&F&(D5^._;cfG";
 
     public static void main(String[] args) {
-        int tournamentId = 1;
+        // used for optimistic control
+        //int tournamentId = 1;
 
-        Thread admin1 = new Thread(() -> updateTournamentStartDate(tournamentId, "2025-04-10 16:00:00"));
-        Thread admin2 = new Thread(() -> updateTournamentStartDate(tournamentId, "2025-04-10 17:00:00"));
+        //Thread admin1 = new Thread(() -> updateTournamentStartDate(tournamentId, "2025-04-10 16:00:00"));
+        //Thread admin2 = new Thread(() -> updateTournamentStartDate(tournamentId, "2025-04-10 17:00:00"));
+
+        //admin1.start();
+        //admin2.start();
+
+        // used for pessimistic control
+        Thread admin1 = new Thread(() -> updateMatchResult(2, 3), "Admin-1");
+        Thread admin2 = new Thread(() -> updateMatchResult(2, 4), "Admin-2");
 
         admin1.start();
         admin2.start();
+
+
     }
+
+    public static void updateMatchResult(int matchId, int winnerId) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
+            conn.setAutoCommit(false); // Begin transaction
+
+            // Step 1: Lock the match row
+            String lockSQL = "SELECT match_id FROM Matches WHERE match_id = ? FOR UPDATE";
+            try (PreparedStatement lockStmt = conn.prepareStatement(lockSQL)) {
+                lockStmt.setInt(1, matchId);
+                lockStmt.executeQuery(); // Locks the row
+            }
+
+            System.out.println(Thread.currentThread().getName() + " - Lock acquired, processing update...");
+
+            // Step 2: Update the winner
+            String updateSQL = "UPDATE Matches SET winner_id = ? WHERE match_id = ?";
+            try (PreparedStatement updateStmt = conn.prepareStatement(updateSQL)) {
+                updateStmt.setInt(1, winnerId);
+                updateStmt.setInt(2, matchId);
+                updateStmt.executeUpdate();
+            }
+
+            conn.commit(); // Commit transaction
+            System.out.println(Thread.currentThread().getName() + " - Match updated successfully!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     public static void updateTournamentStartDate(int tournamentId, String newStartDate) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
