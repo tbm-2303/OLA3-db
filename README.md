@@ -14,7 +14,7 @@ Task:
 
 ### Problem: Two admins attempt to change the start date for the same tournament at the same time.
 
-Uden concurrency control ville først den ene update køre, hvorefter den anden update ville overskrive dataet fra den forhåndværende update. Optimistisk samtidigheds kontrol virker ved kun at acceptere den første update. Den anden vil ikke blive accepteret og admin vil således blive informeret.  
+Uden kontrol vil begge forsøg, fra de to admins, blive accepteret. Data rækken bliver først opdateret, for derefter at blive overskrevet med en ny opdatering. Begge admins tror de har opdateret og alt er fint. Men den ene admins opdatering er overskrevet unden a adminens kendskab til dette. Optimistisk samtidigheds kontrol virker ved kun at acceptere den første update og afvise den anden. Admin 1 forsøger at opdatere datoen og bliver godkendt. På samme tid forsøger admin 2 at opdatere datoen men bliver afvist.  
 
 - ALTER TABLE Tournaments ADD COLUMN version INT NOT NULL DEFAULT 1;
 
