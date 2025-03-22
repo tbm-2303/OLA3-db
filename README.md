@@ -45,4 +45,15 @@ Task:
 
 ![text](pessimisticControl.png) 
 
-When the second thread tries to place an lock on the record, but since the lock is held by the first thread mySQL blocks it and forces the transaction to wait. 
+The second thread tries to place a lock on the record, but since the lock is held by the first thread mySQL blocks it and forces the transaction to wait. 
+---
+
+## 3. Handle Transactions for Tournament Registrations
+Task:
+- `If registration is successful, insert a record into Tournament_Registrations and update player ranking.`
+- `If the tournament is full, rollback the transaction.`
+### Problem: Ensure atomicity when registering a player in a tournament. If any part of the transaction fails, rollback all changes.
+
+- Since our database does not enforce a maximum player limit through constraints or triggers, we check if a tournament has available slots before registering a player.
+- If any part of the transaction(`checking`, `inserting`, `updating`) goes wrong, we rollback to undo all changes. 
+![text](transactionError.png) 

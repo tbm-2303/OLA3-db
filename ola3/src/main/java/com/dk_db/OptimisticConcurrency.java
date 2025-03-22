@@ -7,7 +7,7 @@ public class OptimisticConcurrency {
     private static final String USER = "root";
     private static final String PASSWORD = "KT&F&(D5^._;cfG";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         // used for optimistic control
         //int tournamentId = 1;
 
@@ -18,15 +18,23 @@ public class OptimisticConcurrency {
         //admin2.start();
 
         // used for pessimistic control
-        Thread admin1 = new Thread(() -> updateMatchResult2(2, 4), "Admin-1");
-        Thread admin2 = new Thread(() -> updateMatchResult2(2, 3), "Admin-2");
+        //Thread admin1 = new Thread(() -> updateMatchResult2(2, 4), "Admin-1");
+        //Thread admin2 = new Thread(() -> updateMatchResult2(2, 3), "Admin-2");
 
-        admin1.start();
-        admin2.start();
+        //admin1.start();
+        //admin2.start();
+
+        //3. transaction
+        try {
+            registerPlayerForTournament(2,3); // Example
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+
 
 
     }
-
+    // pessimistic locking
     public static void updateMatchResult(int matchId, int winnerId) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
             conn.setAutoCommit(false); // Begin transaction
@@ -60,6 +68,7 @@ public class OptimisticConcurrency {
         }
     }
 
+    //used for examples in readme.md to show the pessimistic locking
     public static void updateMatchResult2(int matchId, int winnerId) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
             conn.setAutoCommit(false); // Begin transaction
@@ -96,6 +105,7 @@ public class OptimisticConcurrency {
         }
     }
 
+    // optimistic concurrency control
     public static void updateTournamentStartDate(int tournamentId, String newStartDate) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
             conn.setAutoCommit(false);
@@ -139,4 +149,72 @@ public class OptimisticConcurrency {
             e.printStackTrace();
         }
     }
+
+
+    //3. Handle Transactions for Tournament Registrations
+    public static void registerPlayerForTournament(int tournamentId, int playerId) throws SQLException {
+        String maxPlayersQuery = "SELECT max_players FROM Tournaments WHERE tournament_id = ?";
+        String countPlayersQuery = "SELECT COUNT(*) FROM Tournament_Registrations WHERE tournament_id = ?";
+        String insertQuery = "INSERT INTO Tournament_Registrations (tournament_id, player_id) VALUES (?, ?)";
+        String updateRankingQuery = "UPDATE Players SET ranking = ranking + 1 WHERE player_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
+            conn.setAutoCommit(false); // Start transaction
+
+            int maxPlayers;
+            int currentPlayers;
+
+            // Step 1: Get max players for the tournament
+            try (PreparedStatement maxPlayersStmt = conn.prepareStatement(maxPlayersQuery)) {
+                maxPlayersStmt.setInt(1, tournamentId);
+                ResultSet rs = maxPlayersStmt.executeQuery();
+                if (rs.next()) {
+                    maxPlayers = rs.getInt("max_players");
+                } else {
+                    conn.rollback();
+                    throw new SQLException("Tournament not found.");
+                }
+            }
+
+            // Step 2: Get current player count
+            try (PreparedStatement countPlayersStmt = conn.prepareStatement(countPlayersQuery)) {
+                countPlayersStmt.setInt(1, tournamentId);
+                ResultSet rs = countPlayersStmt.executeQuery();
+                if (rs.next()) {
+                    currentPlayers = rs.getInt(1);
+                } else {
+                    conn.rollback();
+                    throw new SQLException("Failed to retrieve player count.");
+                }
+            }
+
+            // Step 3: Check if the tournament is full
+            if (currentPlayers >= maxPlayers) {
+                conn.rollback();
+                throw new SQLException("Tournament is full. Registration failed.");
+            }
+
+            // Step 4: Insert registration and update ranking
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                 PreparedStatement updateRankingStmt = conn.prepareStatement(updateRankingQuery)) {
+                // insert
+                insertStmt.setInt(1, tournamentId);
+                insertStmt.setInt(2, playerId);
+                insertStmt.executeUpdate();
+                // update
+                updateRankingStmt.setInt(1, playerId);
+                updateRankingStmt.executeUpdate();
+
+                conn.commit();
+            }
+            catch (SQLException e) {
+                conn.rollback();
+            }
+        }
+        catch (SQLException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+
 }
