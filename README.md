@@ -66,7 +66,7 @@ Task:
 ### Problem: A player’s ranking should increase after winning a match. Ensure concurrent updates do not cause inconsistencies.
 
 - I used the approach suggested in the assignment. -> Pessimistic locking on the stored procedure 
-- This works the same way as in previous task, but the locking is being handled by the stored procedure. The record is locked until the first transaction is done or calls `rollback()`. Any other transactions trying to modify or aquire the lock, willl be blocked. 
+- This works the same way as in previous task, but the locking is being handled by the stored procedure. The record is locked until the first transaction is done or calls `rollback()`. Any other transactions trying to modify or aquire the lock, must wait.
 - 
 ---
 
@@ -75,6 +75,8 @@ Task:
 - `Ensure that only one registration is successful when two concurrent users try to register.`
 ### Problem: Two players attempt to register for the same tournament at the same time. If the max_players limit is reached, one should be rejected.
 
-
-
+- Pessimistic Locking on tournament record.
+- The second transaction is blocked and must wait until the first transaction has finished or has called the rollback(). 
+- After the transaction has finished, the second thread is blocked because the max limit of the tournament is reached.
 ![test](task5.png) 
+--
