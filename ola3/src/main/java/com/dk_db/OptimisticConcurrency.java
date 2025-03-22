@@ -8,33 +8,68 @@ public class OptimisticConcurrency {
     private static final String PASSWORD = "KT&F&(D5^._;cfG";
 
     public static void main(String[] args) throws SQLException {
-        // 1. used for optimistic control
-        //int tournamentId = 1;
+        /* 1
+        //1. used for optimistic control
 
-        //Thread admin1 = new Thread(() -> updateTournamentStartDate(tournamentId, "2025-04-10 16:00:00"));
-        //Thread admin2 = new Thread(() -> updateTournamentStartDate(tournamentId, "2025-04-10 17:00:00"));
+        int tournamentId = 1;
 
-        //admin1.start();
-        //admin2.start();
+        Thread admin1 = new Thread(() -> updateTournamentStartDate(tournamentId, "2025-04-10 16:00:00"));
+        Thread admin2 = new Thread(() -> updateTournamentStartDate(tournamentId, "2025-04-10 17:00:00"));
 
-        // 2. used for pessimistic control
-        //Thread admin1 = new Thread(() -> updateMatchResult2(2, 4), "Admin-1");
-        //Thread admin2 = new Thread(() -> updateMatchResult2(2, 3), "Admin-2");
+        admin1.start();
+        admin2.start();
+        */
 
-        //admin1.start();
-        //admin2.start();
+        /* 2
+        //2. used for pessimistic control
+        Thread admin1 = new Thread(() -> updateMatchResultTest(2, 4), "Admin-1");
+        Thread admin2 = new Thread(() -> updateMatchResultTest(2, 3), "Admin-2");
 
-        //3. transaction
-        //try {
-        //    registerPlayerForTournament(2,3); // Example
-        //} catch (SQLException e) {
-        //    System.err.println("Error: " + e.getMessage());
-        //}
+        admin1.start();
+        admin2.start();
+        */
 
-        //4.
-        updatePlayerRanking(1);
+        /* 3
+        //3. Handle Transactions for Tournament Registrations
+        try {
+            registerPlayerForTournament(2,3); // Example
+        } catch (SQLException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        /*
 
+        /* 4
+        //4.Implement a Stored Procedure for Safe Ranking Updates
 
+        int playerID = 1; // Change to test different players
+
+        Thread thread1 = new Thread(() -> updatePlayerRankingWithLock(playerID), "Thread 1");
+        Thread thread2 = new Thread(() -> updatePlayerRankingWithLock(playerID), "Thread 2");
+
+        thread1.start();
+        thread2.start();
+
+         */
+
+        /* 4 test
+        int playerID = 1; // Example player ID
+
+        // Create two threads to simulate concurrent ranking updates
+        Thread thread1 = new Thread(() -> updatePlayerRankingWithLockTest(playerID), "Thread-1");
+        Thread thread2 = new Thread(() -> updatePlayerRankingWithLockTest(playerID), "Thread-2");
+
+        // Start both threads
+        thread1.start();
+        thread2.start();
+
+         */
+
+        // Simulating two players trying to register at the same time
+        Thread thread1 = new Thread(() -> registerPlayerWithLock(3, 3), "Thread-1");
+        Thread thread2 = new Thread(() -> registerPlayerWithLock(3, 4), "Thread-2");
+
+        thread1.start();
+        thread2.start();
 
     }
 
@@ -96,8 +131,6 @@ public class OptimisticConcurrency {
                 lockStmt.executeQuery(); // Locks the row
             }
 
-            System.out.println(Thread.currentThread().getName() + " - Lock acquired, processing update...");
-
             // Simulate some processing delay
             Thread.sleep(5000);
 
@@ -108,18 +141,15 @@ public class OptimisticConcurrency {
                 updateStmt.setInt(2, matchId);
                 updateStmt.executeUpdate();
             }
-
             conn.commit(); // Commit transaction
-            System.out.println(Thread.currentThread().getName() + " - Match updated successfully!");
-        } catch (SQLException e) {
+        }
+        catch (SQLException | InterruptedException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
     // 2. used for examples in readme.md to show the pessimistic locking
-    public static void updateMatchResult2(int matchId, int winnerId) {
+    public static void updateMatchResultTest(int matchId, int winnerId) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
             conn.setAutoCommit(false); // Begin transaction
 
@@ -220,16 +250,110 @@ public class OptimisticConcurrency {
         }
     }
 
+
     //4. Implement a Stored Procedure for Safe Ranking Updates
-    public static void updatePlayerRanking(int playerID) throws SQLException {
+    public static void updatePlayerRankingWithLock(int playerID) {
 
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
+            conn.setAutoCommit(false); // Begin transaction
 
             CallableStatement stmt = conn.prepareCall("CALL UpdateRanking(?)");
             stmt.setInt(1, playerID);
             stmt.execute();
         }
-
-
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
+
+    // 4. Implement a Stored Procedure for Safe Ranking Updates
+    public static void updatePlayerRankingWithLockTest(int playerID) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
+            conn.setAutoCommit(false); // Begin transaction
+
+            System.out.println(Thread.currentThread().getName() + " - Trying to update ranking...");
+
+            // Simulate some processing before calling the procedure (to stagger execution)
+            if (Thread.currentThread().getName().equals("Thread-1")) {
+                Thread.sleep(2000); // Delay Thread 1 so Thread 2 gets the lock first
+            }
+
+            long startTime = System.currentTimeMillis();
+            CallableStatement stmt = conn.prepareCall("CALL UpdateRanking(?)");
+            stmt.setInt(1, playerID);
+            stmt.execute(); // This will block if another thread has the lock inside MySQL
+            long elapsedTime = System.currentTimeMillis() - startTime;
+
+            System.out.println(Thread.currentThread().getName() + " - Ranking updated successfully after waiting " + elapsedTime + "ms!");
+
+        } catch (SQLException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    //5.
+    public static void registerPlayerWithLock(int tournamentId, int playerId) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
+            conn.setAutoCommit(false); // Begin transaction
+
+            System.out.println(Thread.currentThread().getName() + " - Trying to register...");
+
+            // Step 1: Lock the tournament row
+            String lockQuery = "SELECT max_players FROM Tournaments WHERE tournament_id = ? FOR UPDATE";
+            int maxPlayers;
+
+            try (PreparedStatement lockStmt = conn.prepareStatement(lockQuery)) {
+                lockStmt.setInt(1, tournamentId);
+                ResultSet rs = lockStmt.executeQuery();
+                if (rs.next()) {
+                    maxPlayers = rs.getInt("max_players");
+                } else {
+                    conn.rollback();
+                    System.out.println(Thread.currentThread().getName() + " - Tournament not found.");
+                    return;
+                }
+            }
+
+            // Step 2: Count current registrations
+            String countQuery = "SELECT COUNT(*) FROM Tournament_Registrations WHERE tournament_id = ?";
+            int currentPlayers;
+
+            try (PreparedStatement countStmt = conn.prepareStatement(countQuery)) {
+                countStmt.setInt(1, tournamentId);
+                ResultSet rs = countStmt.executeQuery();
+                if (rs.next()) {
+                    currentPlayers = rs.getInt(1);
+                } else {
+                    conn.rollback();
+                    System.out.println(Thread.currentThread().getName() + " - Failed to count players.");
+                    return;
+                }
+            }
+
+            // Step 3: Check if registration is possible
+            if (currentPlayers >= maxPlayers) {
+                conn.rollback();
+                System.out.println(Thread.currentThread().getName() + " - Tournament is full. Registration failed.");
+                return;
+            }
+
+            // Step 4: Register the player
+            String insertQuery = "INSERT INTO Tournament_Registrations (tournament_id, player_id) VALUES (?, ?)";
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+                insertStmt.setInt(1, tournamentId);
+                insertStmt.setInt(2, playerId);
+                insertStmt.executeUpdate();
+            }
+
+            conn.commit(); // Commit transaction
+            System.out.println(Thread.currentThread().getName() + " - Registration successful!");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
 }

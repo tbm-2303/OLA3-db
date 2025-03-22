@@ -56,7 +56,7 @@ Task:
 
 - Since our database does not enforce a maximum player limit through constraints or triggers, we check if a tournament has available slots before registering a player.
 - If any part of the transaction(`checking`, `inserting`, `updating`) goes wrong, we rollback to undo all changes. 
-![text](transactionError.png) 
+![test](transactionError.png) 
 ---
 
 ## 4. Implement a Stored Procedure for Safe Ranking Updates
@@ -65,9 +65,16 @@ Task:
 - `Use pessimistic locking to prevent simultaneous updates.`
 ### Problem: A player’s ranking should increase after winning a match. Ensure concurrent updates do not cause inconsistencies.
 
+- I used the approach suggested in the assignment. -> Pessimistic locking on the stored procedure 
+- This works the same way as in previous task, but the locking is being handled by the stored procedure. The record is locked until the first transaction is done or calls `rollback()`. Any other transactions trying to modify or aquire the lock, willl be blocked. 
 - 
-- 
-- 
-
-![text](procedure.sql) 
 ---
+
+## 5. Implement Concurrency Control of Your Own Choice for Tournament Registration
+Task:
+- `Ensure that only one registration is successful when two concurrent users try to register.`
+### Problem: Two players attempt to register for the same tournament at the same time. If the max_players limit is reached, one should be rejected.
+
+
+
+![test](task5.png) 
