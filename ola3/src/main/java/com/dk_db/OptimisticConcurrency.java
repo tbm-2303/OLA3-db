@@ -18,8 +18,8 @@ public class OptimisticConcurrency {
         //admin2.start();
 
         // used for pessimistic control
-        Thread admin1 = new Thread(() -> updateMatchResult(2, 3), "Admin-1");
-        Thread admin2 = new Thread(() -> updateMatchResult(2, 4), "Admin-2");
+        Thread admin1 = new Thread(() -> updateMatchResult2(2, 4), "Admin-1");
+        Thread admin2 = new Thread(() -> updateMatchResult2(2, 3), "Admin-2");
 
         admin1.start();
         admin2.start();
@@ -40,6 +40,9 @@ public class OptimisticConcurrency {
 
             System.out.println(Thread.currentThread().getName() + " - Lock acquired, processing update...");
 
+            // Simulate some processing delay
+            Thread.sleep(5000);
+
             // Step 2: Update the winner
             String updateSQL = "UPDATE Matches SET winner_id = ? WHERE match_id = ?";
             try (PreparedStatement updateStmt = conn.prepareStatement(updateSQL)) {
@@ -52,10 +55,46 @@ public class OptimisticConcurrency {
             System.out.println(Thread.currentThread().getName() + " - Match updated successfully!");
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
+    public static void updateMatchResult2(int matchId, int winnerId) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
+            conn.setAutoCommit(false); // Begin transaction
 
+            long startTime = System.currentTimeMillis(); // Log start time
+            System.out.println(Thread.currentThread().getName() + " - Trying to acquire lock...");
+
+            // Step 1: Lock the match row
+            String lockSQL = "SELECT match_id FROM Matches WHERE match_id = ? FOR UPDATE";
+            try (PreparedStatement lockStmt = conn.prepareStatement(lockSQL)) {
+                lockStmt.setInt(1, matchId);
+                lockStmt.executeQuery(); // This will block if another transaction has the lock
+            }
+
+            long lockTime = System.currentTimeMillis() - startTime; // Calculate wait time
+            System.out.println(Thread.currentThread().getName() + " - Lock acquired after " + lockTime + "ms!");
+
+            // Simulate processing delay
+            Thread.sleep(5000); // Simulate a delay before committing
+
+            // Step 2: Update the winner
+            String updateSQL = "UPDATE Matches SET winner_id = ? WHERE match_id = ?";
+            try (PreparedStatement updateStmt = conn.prepareStatement(updateSQL)) {
+                updateStmt.setInt(1, winnerId);
+                updateStmt.setInt(2, matchId);
+                updateStmt.executeUpdate();
+            }
+
+            conn.commit(); // Commit transaction
+            System.out.println(Thread.currentThread().getName() + " - Match updated successfully!");
+
+        } catch (SQLException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void updateTournamentStartDate(int tournamentId, String newStartDate) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
