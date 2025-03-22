@@ -57,3 +57,17 @@ Task:
 - Since our database does not enforce a maximum player limit through constraints or triggers, we check if a tournament has available slots before registering a player.
 - If any part of the transaction(`checking`, `inserting`, `updating`) goes wrong, we rollback to undo all changes. 
 ![text](transactionError.png) 
+---
+
+## 4. Implement a Stored Procedure for Safe Ranking Updates
+Task:
+- `Create a stored procedure that updates player ranking.`
+- `Use pessimistic locking to prevent simultaneous updates.`
+### Problem: A player’s ranking should increase after winning a match. Ensure concurrent updates do not cause inconsistencies.
+
+- 
+- 
+- 
+
+![text](procedure.sql) 
+---
