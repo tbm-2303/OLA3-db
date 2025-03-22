@@ -33,6 +33,9 @@ Version baseret Optimistisk samtidigheds kontrol virker ved, at kun at acceptere
 
 
 ## 2. Implement Pessimistic Concurrency Control for Match Updates
+Task:
+- `Implement pessimistic locking using SELECT ... FOR UPDATE.`
+- `Ensure only one admin can update match results at a time.`
 ###  Problem: Two admins attempt to update the same match result at the same time. Ensure only one update happens at a time.
 
 - Pessimistic locking: Prevent other users from performing operations on data tables or rows until the transaction is completed.
