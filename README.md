@@ -10,6 +10,7 @@
 - I created a DB. I ran the script to create the tables.
 - I created a dummy tournament.
 - I created a simple java application.
+- I did try some of the method with 2 threads, just for fun. This was just for my own enjoyment and the real performance report will still be made. 
 
 ## 1. Implement Optimistic Concurrency Control for Tournament Updates
 Task:
@@ -25,10 +26,6 @@ Version baseret Optimistisk samtidigheds kontrol virker ved, at kun at acceptere
 - ALTER TABLE Tournaments ADD COLUMN version INT NOT NULL DEFAULT 1;
 
 - Jeg har benyttet samme fremgangmåde som den vedlagte note: [Optimistic Concurrency Control](https://github.com/Tine-m/final-assignment/blob/main/application-concurrency-note.md#how-optimistic-concurrency-control-works).
-
-- Kun den ene tråd blev accepteret. Den anden blev, som forvented, afvist. 
-![text](OptimisticConcurrency.png) 
-
 ---
 
 
@@ -42,8 +39,6 @@ Task:
 - We are using an exclusive; We establish the exclusive lock by adding FOR UPDATE at the end of the select query.
 
 - The transactions in the first thread locks the record and holds it until transaction commit or roll back. Any other transactions must wait before they can modify the locked record or gain access to the lock. This means admin 2 must wait until the first transaction is over before trying to modify the same record. Used the same appoach as in the note: [Optimistic Concurrency Control](https://github.com/Tine-m/final-assignment/blob/main/application-concurrency-note.md#how-optimistic-concurrency-control-works)
-
-![text](pessimisticControl.png) 
 
 The second thread tries to place a lock on the record, but since the lock is held by the first thread mySQL blocks it and forces the transaction to wait. 
 ---
@@ -67,7 +62,6 @@ Task:
 
 - I used the approach suggested in the assignment. -> Pessimistic locking on the stored procedure 
 - This works the same way as in previous task, but the locking is being handled by the stored procedure. The record is locked until the first transaction is done or calls `rollback()`. Any other transactions trying to modify or aquire the lock, must wait.
-- 
 ---
 
 ## 5. Implement Concurrency Control of Your Own Choice for Tournament Registration
