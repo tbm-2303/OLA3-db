@@ -77,15 +77,12 @@ CREATE TABLE Matches (
 
 ### **1️⃣ Optimistic Concurrency Control (OCC) Results**
 **Test Scenario:** 
-- Simulated 10 concurrent threads attempting to register the same player (ID: 3) into the same tournament (ID: 1). 
-- TO create multiple threads that run transactions concurrently, I used the same approach as in the recommended note; https://github.com/Tine-m/final-assignment/blob/main/performance-test.md.
+- Simulated 10 concurrent threads attempting to register the same player into the same tournament. 
+- To create multiple threads that run transactions concurrently, I used the same approach as in the recommended note; https://github.com/Tine-m/final-assignment/blob/main/performance-test.md.
 - I used Version based OCC on registering players in tournaments:
     - Reads the current version of the tournament.
-
     - Attempts to insert the player into the Tournament_Registrations table.
-
     - Commits only if the tournament version has not changed, ensuring only one transaction succeeds.
-
     - If a version mismatch occurs, the transaction rolls back and retries.
 
 | **Metric** | **Value** |
@@ -95,7 +92,7 @@ CREATE TABLE Matches (
 | Number of retries due to version mismatch | [9] |
 
 **Observations:**
-- [The thread that happens ot be first updates the version. all the subsequent transactions will first fail beacuse of this version mismatch(OCC). The 9 failing thread will then all retry. On the the retry they all fail due to the player already being registered. this will also be reflected in the console but with 10 threads its to big to include screenshot.]
+- Only one thread registered a player. All the subsequent transactions first failed due to version mismatch(OCC). The 9 failing threads all retried. On the the retry they all failed due to the player already being registered in that tournament. This will also be reflected in the console but with 10 threads its to big to include screenshot.
 
 ---
 
