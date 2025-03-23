@@ -97,37 +97,36 @@ CREATE TABLE Matches (
 ---
 
 ### **2️⃣ Pessimistic Concurrency Control (PCC) Results**
-**Test Scenario:** [Describe how PCC was tested]
+**Test Scenario:** 
+- To evaluate Pessimistic Concurrency Control (PCC), I simulated multiple concurrent threads attempting to update the same match result in a database.
 
 | **Metric** | **Value** |
 |-----------|----------|
-| Execution Time (ms) | [Your Value] |
-| Number of successful transactions | [Your Value] |
-| Number of transactions that had to wait due to locks | [Your Value] |
+| Execution Time (ms) | [1173] |
+| Number of successful transactions | [10] |
+| Number of transactions that had to wait due to locks | [9] |
 
 **Observations:**
-- [Summarize key findings related to PCC]
+- All transactions eventually succeeded.
+- All other transactions had to wait for the lock before proceeding, except the first. 
+- High load testing makes the execution time higher since transactions must wait on each other. 
 
 ---
 
 ## **📌 Comparison Table**
 | **Metric**               | **Optimistic CC** | **Pessimistic CC** |
 |--------------------------|------------------|------------------|
-| **Execution Time**       | [Your Value] | [Your Value] |
-| **Transaction Failures** | [Your Value] | [Your Value] |
-| **Lock Contention**      | [Your Value] | [Your Value] |
-| **Best Use Case**       | [Your Value] | [Your Value] |
-
----
-
-## **Performance Comparison Chart**
-_You *may* want to visualize your finding by including a  chart that illustrates the differences in execution time, successful transactions, and transactions with delays for OCC vs. PCC._
+| **Execution Time**       | [1130] | [1173] |
+| **Transaction Failures** | [9 (due to OCC retries)] | [0 (all transactions eventually succeed after waiting)] |
+| **Lock Contention**      | [Low (only one update wins, others fail and retry)] | [High (all other threads wait for lock to be released)] |
+| **Best Use Case**       | [When conflicts are rare] | [When conflicts are frequent] |
 
 ---
 
 ## **📌 Conclusion & Recommendations**
 ### **Key Findings:**
-- [Summarize overall findings and comparison of OCC vs. PCC]
-
+- OCC is best when you have few conflict since failed transactions must retry(we could also have OCC where a transaction dont retry but gives an error etc.). When you have few conflicts, OCC is preferable since we dont have to lock any record. this allows multiple transactions to run concurrently, in case of conflict one will fail at commit level. PCC is best for scenarios where you expect many conflict to occur. In this high load scenario each transaction locks the row such that subsequent transactions must wait until the key is available. This is done exactly to prevent those conflict from arising; each transaction instead runs in sequence and no conflict can happen. 
 ### **Final Recommendations:**
-- [Provide recommendations based on the test results]
+- For Low Contention Scenarios: Use Optimistic Concurrency Control (OCC) to maximize performance and allow higher concurrency. Since OCC avoids locking, it is ideal for read-heavy workloads(conflicts detected at update time) or cases where conflicts are rare.
+
+- For High Contention Scenarios: Use Pessimistic Concurrency Control (PCC) to prevent frequent conflicts and ensure data consistency. PCC is suitable for write-heavy workloads where transactions must not fail due to version mismatches.

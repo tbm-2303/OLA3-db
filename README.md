@@ -36,11 +36,11 @@ Task:
 ###  Problem: Two admins attempt to update the same match result at the same time. Ensure only one update happens at a time.
 
 - Pessimistic locking: Prevent other users from performing operations on data tables or rows until the transaction is completed.
-- We are using an exclusive; We establish the exclusive lock by adding FOR UPDATE at the end of the select query.
+- We are using an exclusive lock; We establish the lock by adding FOR UPDATE at the end of the select query.
 
 - The transactions in the first thread locks the record and holds it until transaction commit or roll back. Any other transactions must wait before they can modify the locked record or gain access to the lock. This means admin 2 must wait until the first transaction is over before trying to modify the same record. Used the same appoach as in the note: [Optimistic Concurrency Control](https://github.com/Tine-m/final-assignment/blob/main/application-concurrency-note.md#how-optimistic-concurrency-control-works)
 
-The second thread tries to place a lock on the record, but since the lock is held by the first thread mySQL blocks it and forces the transaction to wait. 
+- The second thread tries to place a lock on the record, but since the lock is held by the first thread mySQL blocks it and forces the transaction to wait. 
 ---
 
 ## 3. Handle Transactions for Tournament Registrations
