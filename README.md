@@ -77,6 +77,6 @@ Task:
 
 - Pessimistic Locking on tournament record.
 - The second transaction is blocked and must wait until the first transaction has finished or has called the rollback(). 
-- After the transaction has finished, the second thread is blocked because the max limit of the tournament is reached.
+- After the transaction has finished, the second thread fails because the max limit of the tournament is reached.
 ![test](task5.png) 
 --

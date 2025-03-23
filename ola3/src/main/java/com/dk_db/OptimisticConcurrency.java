@@ -64,13 +64,14 @@ public class OptimisticConcurrency {
 
          */
 
+        /* 5
         // Simulating two players trying to register at the same time
         Thread thread1 = new Thread(() -> registerPlayerWithLock(3, 3), "Thread-1");
         Thread thread2 = new Thread(() -> registerPlayerWithLock(3, 4), "Thread-2");
 
         thread1.start();
         thread2.start();
-
+         */
     }
 
 
@@ -94,9 +95,6 @@ public class OptimisticConcurrency {
                 currentVersion = rs.getInt("version");
             }
 
-            // Simulated delay
-            Thread.sleep(2000);
-
             // Step 2: Attempt to update
             String updateSQL = "UPDATE Tournaments SET start_date = ?, version = version + 1 WHERE tournament_id = ? AND version = ?";
             try (PreparedStatement updateStmt = conn.prepareStatement(updateSQL)) {
@@ -114,7 +112,7 @@ public class OptimisticConcurrency {
                     System.out.println(Thread.currentThread().getName() + " - Tournament updated successfully!");
                 }
             }
-        } catch (SQLException | InterruptedException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -131,9 +129,6 @@ public class OptimisticConcurrency {
                 lockStmt.executeQuery(); // Locks the row
             }
 
-            // Simulate some processing delay
-            Thread.sleep(5000);
-
             // Step 2: Update the winner
             String updateSQL = "UPDATE Matches SET winner_id = ? WHERE match_id = ?";
             try (PreparedStatement updateStmt = conn.prepareStatement(updateSQL)) {
@@ -143,11 +138,11 @@ public class OptimisticConcurrency {
             }
             conn.commit(); // Commit transaction
         }
-        catch (SQLException | InterruptedException e) {
+        catch (SQLException e) {
             e.printStackTrace();
         }
     }
-
+/*
     // 2. used for examples in readme.md to show the pessimistic locking
     public static void updateMatchResultTest(int matchId, int winnerId) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
@@ -185,6 +180,7 @@ public class OptimisticConcurrency {
         }
     }
 
+ */
     //3. Handle Transactions for Tournament Registrations
     public static void registerPlayerForTournament(int tournamentId, int playerId) throws SQLException {
         String maxPlayersQuery = "SELECT max_players FROM Tournaments WHERE tournament_id = ?";
@@ -266,6 +262,7 @@ public class OptimisticConcurrency {
         }
     }
 
+    /*
     // 4. Implement a Stored Procedure for Safe Ranking Updates
     public static void updatePlayerRankingWithLockTest(int playerID) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
@@ -292,6 +289,7 @@ public class OptimisticConcurrency {
     }
 
 
+     */
     //5.
     public static void registerPlayerWithLock(int tournamentId, int playerId) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD)) {
