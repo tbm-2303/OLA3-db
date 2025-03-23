@@ -10,7 +10,7 @@
 - I created a DB. I ran the script to create the tables.
 - I created a dummy tournament.
 - I created a simple java application.
-- I did try some of the method with 2 threads, just for fun. This was just for my own enjoyment and the real performance report will still be made. 
+- I tried using thread to see if i could observe the different control types. This was just for my own enjoyment and is not a substitute the real performance report. Each function in the code is marked using the assignment numbering.  
 
 ## 1. Implement Optimistic Concurrency Control for Tournament Updates
 Task:

@@ -31,7 +31,8 @@ CREATE TABLE Tournaments (
     game VARCHAR(50) NOT NULL,
     max_players INT NOT NULL,
     start_date DATETIME NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    version INT NOT NULL DEFAULT 1
 );
 
 CREATE TABLE Tournament_Registrations (
@@ -64,10 +65,11 @@ CREATE TABLE Matches (
 ### **Test Parameters:**
 | Parameter        | Value |
 |-----------------|-------|
-| **Number of concurrent transactions** | [Your Value] |
-| **Database** | [Your Value] |
-| **Execution Environment** | [Your Value] |
-| **Java Thread Pool Size** | [Your Value] |
+| **Number of concurrent transactions** | [10 from ExecutorService] |
+| **Database** | [MySQL 8.0] |
+| **Java Version** | [OpenJDK 23.0.2 ] |
+| **IDE** | [IntelliJ IDEA 2024.3.2] |
+| **Java Thread Pool Size** | [10 (from Executors.newFixedThreadPool(10))] |
 
 ---
 
