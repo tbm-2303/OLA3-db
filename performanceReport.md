@@ -92,8 +92,7 @@ CREATE TABLE Matches (
 | Number of retries due to version mismatch | [9] |
 
 **Observations:**
-- Only one thread registered a player. All the subsequent transactions first failed due to version mismatch(OCC). The 9 failing threads all retried. On the the retry they all failed due to the player already being registered in that tournament. This will also be reflected in the console but with 10 threads its to big to include screenshot.
-
+- Only one thread registered a player. All the subsequent transactions first failed due to version mismatch(OCC). The 9 failing threads all retried. On the the retry they all failed due to the player already being registered in that tournament. 
 ---
 
 ### **2️⃣ Pessimistic Concurrency Control (PCC) Results**

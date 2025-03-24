@@ -73,4 +73,12 @@ Task:
 - The second transaction is blocked and must wait until the first transaction has finished or has called the rollback(). 
 - After the transaction has finished, the second thread fails because the max limit of the tournament is reached.
 ![test](task5.png) 
---
+---
+
+# Part 2: Denormalization & Partitions & Query Optimization. 
+
+- Denormalization is a seperate step done after normalizing a database. Denomalization tries to avoid costly joins and aggregations by combining related data tables. This can make it easier to query data without joins, but at the expence of making it harder to update the table. Denormalizing helps with query performance by eliminating the need for joins and aggregations, however data consistency becomes harder to maintain. 
+
+- range partitioning: Divides data into partitions based on a range of values in a column. Each partition holds rows that fall within a specific range.
+- List partitioning: Divides data into partitions based on a set of predefined values in a column. Each partition stores rows that match specific values.
+- partitioning reduces query time because the total number of rows needed to iterate is lower. mySQL dont allow foreign keys in partitioned tables. This is beacuse of referential integrity on the child table; basically the childs reference must point to a valid row in the parent table and if the parent table is partitioned mysql stores them in separate storage segements.
